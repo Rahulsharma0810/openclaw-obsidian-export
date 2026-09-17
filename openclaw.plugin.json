@@ -1,0 +1,43 @@
+{
+  "id": "openclaw-obsidian-export",
+  "name": "Obsidian Export",
+  "description": "Auto-saves every OpenClaw session transcript to an Obsidian vault with no LLM tokens, plus an on-demand agent-authored summary export.",
+  "version": "1.0.0",
+  "categories": ["context", "tools"],
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": ["export_to_obsidian"]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "outputDir": {
+        "type": "string",
+        "description": "Absolute (or ~/) directory where session notes are written. Defaults to $OBSIDIAN_VAULT_PATH/_Shared_Systems/Openclaw or ~/Brain/_Shared_Systems/Openclaw."
+      },
+      "userName": {
+        "type": "string",
+        "description": "Label for user messages in the transcript (default: You)."
+      },
+      "assistantName": {
+        "type": "string",
+        "description": "Label for assistant messages in the transcript (default: Assistant)."
+      },
+      "sessionPrefix": {
+        "type": "string",
+        "description": "Prefix for the transcript heading (default: Session)."
+      },
+      "transcriptFilenameFormat": {
+        "type": "string",
+        "description": "Filename template for auto transcripts. Tokens: {date} {hostname} {title} {sessionId}. Default: '{hostname} - {title} - Transcript'."
+      },
+      "summaryFilenameFormat": {
+        "type": "string",
+        "description": "Filename template for on-demand summaries. Tokens: {date} {hostname} {title} {sessionId}. Default: '{hostname} - {title} - Summary'."
+      }
+    }
+  }
+}
