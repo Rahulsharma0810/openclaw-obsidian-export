@@ -43,6 +43,21 @@ function expandHome(p: string): string {
   return p;
 }
 
+// Resolve `name` inside `dir` and return the absolute path only if it stays
+// within `dir`; otherwise return null. Used to confine every filesystem write
+// and delete to the configured output directory.
+function confineToDir(dir: string, name: string): string | null {
+  const resolvedDir = path.resolve(dir);
+  const resolvedPath = path.resolve(resolvedDir, name);
+  if (
+    resolvedPath !== resolvedDir &&
+    !resolvedPath.startsWith(resolvedDir + path.sep)
+  ) {
+    return null;
+  }
+  return resolvedPath;
+}
+
 function resolveConfig(pluginConfig: Record<string, unknown> | undefined): ResolvedConfig {
   const cfg = pluginConfig ?? {};
   const str = (k: string, env: string, dflt: string): string => {
@@ -446,32 +461,32 @@ async function writeNote(
     filenameOverride ||
     (kind === "Summary" ? cfg.summaryFilenameFormat : cfg.transcriptFilenameFormat);
   const filename = buildFilename(format, tokens);
-  const fullPath = path.join(dir, filename);
 
   // Defense in depth: guarantee the resolved path stays inside the output dir.
-  const resolvedDir = path.resolve(dir);
-  const resolvedPath = path.resolve(fullPath);
-  if (
-    resolvedPath !== resolvedDir &&
-    !resolvedPath.startsWith(resolvedDir + path.sep)
-  ) {
+  const fullPath = confineToDir(dir, filename);
+  if (!fullPath) {
     throw new Error(
-      `refusing to write outside output dir: ${resolvedPath} not within ${resolvedDir}`,
+      `refusing to write outside output dir: ${filename} not within ${path.resolve(dir)}`,
     );
   }
 
   const markdown = eventsToMarkdown(events, cfg, meta, opts);
 
   // Overwrite-not-duplicate: if this session+kind was written before under a
-  // different filename, remove the stale file first.
+  // different filename, remove the stale file first. The stored name is
+  // untrusted (the index file could be tampered with), so reduce it to a bare
+  // basename and confine it to the output dir before unlinking.
   const index = await loadIndex(dir);
   const indexKey = `${meta.sessionId}::${kind}`;
   const prev = index[indexKey];
   if (prev && prev !== filename) {
-    try {
-      await unlink(path.join(dir, prev));
-    } catch {
-      // ignore
+    const stalePath = confineToDir(dir, path.basename(prev));
+    if (stalePath && stalePath !== fullPath) {
+      try {
+        await unlink(stalePath);
+      } catch {
+        // ignore
+      }
     }
   }
 
