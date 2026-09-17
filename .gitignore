@@ -4,3 +4,4 @@ dist/
 .DS_Store
 .session-index.json
 .plugin.log
+reports/
