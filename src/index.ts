@@ -598,14 +598,22 @@ export default definePluginEntry({
           },
         },
       },
-      async execute(params: any) {
+      async execute(_toolCallId: any, params: any) {
         try {
-          const sessionId: string =
-            params?.sessionId || toolCtx?.sessionId || "";
-          const sessionKey: string | undefined =
-            params?.sessionKey || toolCtx?.sessionKey;
+          // If the caller explicitly targets another session (by sessionId or
+          // sessionKey), that override is authoritative — do NOT blend in the
+          // current session's identifiers from toolCtx, or we'd read/label the
+          // wrong session. Only fall back to toolCtx when no override is given.
+          const hasOverride = Boolean(params?.sessionId || params?.sessionKey);
+          const sessionKey: string | undefined = hasOverride
+            ? params?.sessionKey
+            : toolCtx?.sessionKey;
+          const sessionId: string = hasOverride
+            ? params?.sessionId || ""
+            : params?.sessionId || toolCtx?.sessionId || "";
           const agentId: string | undefined =
-            toolCtx?.agentId || agentIdFromSessionKey(sessionKey);
+            agentIdFromSessionKey(sessionKey) ||
+            (hasOverride ? undefined : toolCtx?.agentId);
 
           const events = await readTranscriptEvents(api, {
             agentId,
