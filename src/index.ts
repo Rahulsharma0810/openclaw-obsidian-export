@@ -115,6 +115,13 @@ function buildFilename(
   );
   name = name.replace(/\s{2,}/g, " ").replace(/^[\s-]+|[\s-]+$/g, "").trim();
   if (!name) name = tokens.title || tokens.sessionId || "session";
+  // Security: confine writes to the output dir. Strip any path components,
+  // separators, and traversal so a caller-supplied `filename` (or a token that
+  // expands to one) can never escape the configured vault folder.
+  name = path.basename(name);
+  name = name.replace(/[/\\]/g, "-").replace(/\.\.+/g, ".").replace(/^\.+/, "");
+  name = name.replace(/^[\s-]+|[\s-]+$/g, "").trim();
+  if (!name) name = tokens.sessionId || "session";
   if (!name.toLowerCase().endsWith(".md")) name += ".md";
   return name;
 }
@@ -442,6 +449,18 @@ async function writeNote(
   const filename = buildFilename(format, tokens);
   const fullPath = path.join(dir, filename);
 
+  // Defense in depth: guarantee the resolved path stays inside the output dir.
+  const resolvedDir = path.resolve(dir);
+  const resolvedPath = path.resolve(fullPath);
+  if (
+    resolvedPath !== resolvedDir &&
+    !resolvedPath.startsWith(resolvedDir + path.sep)
+  ) {
+    throw new Error(
+      `refusing to write outside output dir: ${resolvedPath} not within ${resolvedDir}`,
+    );
+  }
+
   const markdown = eventsToMarkdown(events, cfg, meta, opts);
 
   // Overwrite-not-duplicate: if this session+kind was written before under a
@@ -573,7 +592,7 @@ export default definePluginEntry({
         filename: Type.Optional(
           Type.String({
             description:
-              "Filename override (tokens {date} {hostname} {title} {sessionId}); '.md' auto-added.",
+              "Filename override (tokens {date} {hostname} {title} {sessionId}); '.md' auto-added. Path components are stripped; the note is always written inside the configured output dir.",
           }),
         ),
       }),
