@@ -20,7 +20,6 @@ import { mkdir, readFile, writeFile, appendFile, unlink } from "node:fs/promises
 
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { readSessionTranscriptEvents } from "openclaw/plugin-sdk/session-transcript-runtime";
-import { Type } from "typebox";
 
 const PKG_NAME = "openclaw-obsidian-export";
 const PKG_VERSION = "1.0.0";
@@ -570,32 +569,35 @@ export default definePluginEntry({
         "IMPORTANT: before calling, WRITE a concise narrative summary of the session " +
         "(goal, what was done, key decisions/gotchas, current state, next steps) and " +
         "pass it as `summary`. Set transcript=false for a summary-only note.",
-      parameters: Type.Object({
-        summary: Type.Optional(
-          Type.String({
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          summary: {
+            type: "string",
             description:
               "Agent-authored narrative summary for the Agent Context block.",
-          }),
-        ),
-        sessionId: Type.Optional(
-          Type.String({ description: "Session id; defaults to the current session." }),
-        ),
-        sessionKey: Type.Optional(
-          Type.String({ description: "Session key; defaults to the current session." }),
-        ),
-        transcript: Type.Optional(
-          Type.Boolean({
+          },
+          sessionId: {
+            type: "string",
+            description: "Session id; defaults to the current session.",
+          },
+          sessionKey: {
+            type: "string",
+            description: "Session key; defaults to the current session.",
+          },
+          transcript: {
+            type: "boolean",
             description:
               "true (default) writes the full transcript note; false writes a summary-only note.",
-          }),
-        ),
-        filename: Type.Optional(
-          Type.String({
+          },
+          filename: {
+            type: "string",
             description:
               "Filename override (tokens {date} {hostname} {title} {sessionId}); '.md' auto-added. Path components are stripped; the note is always written inside the configured output dir.",
-          }),
-        ),
-      }),
+          },
+        },
+      },
       async execute(params: any) {
         try {
           const sessionId: string =

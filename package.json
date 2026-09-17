@@ -1,6 +1,6 @@
 {
   "name": "openclaw-obsidian-export",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Auto-saves every OpenClaw session transcript to an Obsidian vault with no LLM tokens, plus an on-demand agent-authored summary export.",
   "type": "module",
   "license": "MIT",
