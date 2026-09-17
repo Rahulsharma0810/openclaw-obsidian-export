@@ -3,7 +3,7 @@
   "name": "Obsidian Export",
   "description": "Auto-saves every OpenClaw session transcript to an Obsidian vault with no LLM tokens, plus an on-demand agent-authored summary export.",
   "version": "1.0.0",
-  "categories": ["tools"],
+  "categories": ["developer-tools"],
   "activation": {
     "onStartup": true
   },
