@@ -23,7 +23,7 @@ where `hostname` is the short host name and `session name` is the session title 
 ## Install
 
 ```sh
-openclaw plugins install clawhub:Rahulsharma0810/openclaw-obsidian-export
+openclaw plugins install clawhub:openclaw-obsidian-export
 openclaw plugins enable openclaw-obsidian-export
 openclaw config set plugins.entries.openclaw-obsidian-export.hooks.allowConversationAccess true
 openclaw gateway restart
@@ -71,9 +71,30 @@ openclaw gateway restart
 openclaw plugins inspect openclaw-obsidian-export --runtime --json
 ```
 
-## Security
+## Security & data access
 
-Notes are plaintext transcripts of your sessions. Point `outputDir` at a vault you control and avoid syncing secrets.
+This plugin is **local-only**. It does not make any network calls, phone home, or
+send your data anywhere — it only reads the local session store and writes files
+into the folder you configure. Be aware of what it does, by design:
+
+- **It stores full session transcripts in plaintext.** Every `session_end`
+  writes the complete conversation (user + assistant messages and tool calls)
+  as an unencrypted Markdown file. Anything said in a session — including any
+  secrets that appear in the transcript — is persisted to disk. Point
+  `outputDir` at a vault you control and avoid pasting secrets into sessions.
+- **All agents write to one shared folder.** By default every agent's notes go
+  to the same directory, so transcripts from different agents live side by side.
+  Set a per-use `outputDir` if you need isolation.
+- **The `export_to_obsidian` tool can read other sessions.** When you pass an
+  explicit `sessionId`/`sessionKey`, the tool reads and exports *that* session's
+  transcript (useful for exporting an existing/older session on demand), not
+  just the current one. Only sessions in your local store are reachable.
+- **Writes and deletes are confined to `outputDir`.** Filenames are reduced to a
+  bare basename and path-traversal is stripped; the resolved path is verified to
+  stay inside `outputDir` before any file is written or the stale-file dedup
+  `unlink` runs, so the plugin cannot touch files outside that directory.
+- **Reading transcripts requires your consent.** The plugin only reads the store
+  after you set `allowConversationAccess: true`; without it, no transcript is read.
 
 ## License
 
